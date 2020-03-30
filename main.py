@@ -56,18 +56,17 @@ def SendMail(argv, ip):
     else:
         msg['To'] = 'defaultRecipient'
 
-    # mail protocal
+    # mail protocol
     try:
         mailServer = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         mailServer.ehlo()
         mailServer.login(user, password)
         mailServer.send_message(msg)
+        print('Mail has been sent.')
     except (Exception) as error:
         print('Exception: {0}'.format (error.__class__.__name__))
     finally:
         mailServer.close()
-
-    print('Mail has been sent.')
 
 if __name__ == '__main__':
     print('Run GetIPInfo.')
