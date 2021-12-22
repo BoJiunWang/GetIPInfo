@@ -9,41 +9,73 @@ import sys, smtplib, os, codecs
 def GetIPWithBot():
     print('Try to get IP.')
 
-    # Get ip via whatismyipaddress
-    url = urlopen("https://bot.whatismyipaddress.com")
-    ip = url.read().decode()
+    # Get ip via ipify
+    try:
+        ip = urlopen("https://api.ipify.org").read().decode()
+    except (Exception) as error:
+        logError(error)
+        return;
 
     print('Get IP: {0}.'.format(ip))
     return CheckWithFile(ip)
 
 def CheckWithFile(ip):
-    # Check file is exist, if not create it
-    if os.path.isfile('./ip.txt') == False:
-       codecs.open("./ip.txt", "x", "utf-8")
+    fileName = "./ip.txt"
+    
+    try:
+        # Check file is exist, if not create it
+        if os.path.isfile(fileName) == False:
+            codecs.open(fileName, "x", "utf-8")
 
-    # Open file
-    file = codecs.open("./ip.txt", "r", "utf-8")
+        # Open file
+        file = codecs.open(fileName, "r", "utf-8")
 
-    # Check IP in file is change or not
-    if file.read() != ip:
-        file = codecs.open("./ip.txt", "w", "utf-8")
-        file.write(ip)
-        SendMail(sys.argv, ip)
-    else:
-        print("IP not change.")
+        # Check IP in file is change or not
+        if file.read() != ip:
+            file = codecs.open(fileName, "w", "utf-8")
+            file.write(ip)
+            SendMail(sys.argv, ip)
+        else:
+            print("IP not change.")
+    except (Exception) as errorLog:
+        print(errorLog)
+    finally:
+        file.close()
+    
+    if (ip):
+        return ip
 
-    return ip
+def logError(error):
+    fileName = "./ip_Error.txt"
+
+    # Log error
+    try:
+        # Check file is exist, if not create it
+        if os.path.isfile(fileName) == False:
+            codecs.open(fileName, "x", "utf-8")
+
+        # Open file
+        file = codecs.open(fileName, "w", "utf-8")
+        file.write(str(error))
+        print('{0} error, try to check file {1}'.format(error, fileName))
+    except (Exception) as errorLog:
+        print(errorLog)
+    finally:
+        file.close()
+
+    return
 
 def SendMail(argv, ip):
     print('Try to send mail.')
 
     # Account setting
-    user = 'userAccount'
-    password = 'userPassword'
+    user = ''
+    password = ''
+    defaultMailAddress = ''
 
     # mail content
-    content = '<html lang=\"zh-Hant-TW\"><head><meta charset=\"UTF-8\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Noto+Sans+TC\"></head><style>body {vertical-align: center;font-family: \"Noto Sans TC\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;font-size: 20px;}</style><body><span>&#10071;&#10071;&#10071; IP has been change to: {ip}</span></body></html>'.replace('{ip}', ip)
-    
+    content = '<html lang=\"zh-Hant-TW\"><head><meta charset=\"UTF-8\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap\"></head><style>body {vertical-align: center;font-family: \"Noto Sans TC\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;font-size: 20px;}</style><body><span>&#10071;&#10071;&#10071; IP has been change to: {ip}</span></body></html>'.replace('{ip}', ip)
+
     # mail setting
     msg = MIMEMultipart('alternative')
     msg['Subject'] = 'IP has been modified!'
@@ -54,7 +86,7 @@ def SendMail(argv, ip):
     if len(argv) == 2:
         msg['To'] = argv[1]
     else:
-        msg['To'] = 'defaultRecipient'
+        msg['To'] = defaultMailAddress
 
     # mail protocol
     try:
@@ -64,7 +96,7 @@ def SendMail(argv, ip):
         mailServer.send_message(msg)
         print('Mail has been sent.')
     except (Exception) as error:
-        print('Exception: {0}'.format (error.__class__.__name__))
+        logError(error)
     finally:
         mailServer.close()
 
