@@ -14,39 +14,45 @@ def GetIPWithBot():
         ip = urlopen("https://api.ipify.org").read().decode()
     except (Exception) as error:
         logError(error)
-        return;
+        return
 
     print('Get IP: {0}.'.format(ip))
-    return CheckWithFile(ip)
+    CheckWithFile(ip)
 
 def CheckWithFile(ip):
     fileName = "./ip.txt"
     
     try:
-        # Check file is exist, if not create it
-        if os.path.isfile(fileName) == False:
-            codecs.open(fileName, "x", "utf-8")
+        # Check file is exist
+        isHaveFile = os.path.isfile(fileName)
 
-        # Open file
-        file = codecs.open(fileName, "r", "utf-8")
-
-        # Check IP in file is change or not
-        if file.read() != ip:
-            # Send Mail first
-            SendMail(sys.argv, ip)
-            # Write IP to file
-            file = codecs.open(fileName, "w", "utf-8")
-            file.write(ip)
+        if isHaveFile:
+            # Open file
+            file = codecs.open(fileName, "r", "utf-8")
+            # Check IP in file is change or not
+            if file.read() != ip:
+                # Send mail first
+                if SendMail(sys.argv, ip) != 0:
+                    # Send mail failed
+                    return
+            else:
+                print("IP not change.")
+                return
         else:
-            print("IP not change.")
-    except (Exception) as errorLog:
-        print(errorLog)
-    finally:
+            # Send mail first
+            if SendMail(sys.argv, ip) != 0:
+                # Send mail failed
+                return
+            # if not create it
+            codecs.open(fileName, "x", "utf-8")
+            
+        # Write IP to file
+        file = codecs.open(fileName, "w", "utf-8")
+        file.write(ip)
         file.close()
+    except (Exception) as errorLog:
+        logError(errorLog)        
     
-    if (ip):
-        return ip
-
 def logError(error):
     fileName = "./ip_Error.txt"
 
@@ -96,11 +102,15 @@ def SendMail(argv, ip):
         mailServer.ehlo()
         mailServer.login(user, password)
         mailServer.send_message(msg)
+        ret = 0
         print('Mail has been sent.')
     except (Exception) as error:
         logError(error)
+        ret = -1
     finally:
         mailServer.close()
+    
+    return ret
 
 if __name__ == '__main__':
     print('Run GetIPInfo.')
