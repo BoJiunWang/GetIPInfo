@@ -71,8 +71,6 @@ def logError(error):
     finally:
         file.close()
 
-    return
-
 def SendMail(argv, ip):
     print('Try to send mail.')
 
