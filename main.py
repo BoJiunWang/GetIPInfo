@@ -32,9 +32,11 @@ def CheckWithFile(ip):
 
         # Check IP in file is change or not
         if file.read() != ip:
+            # Send Mail first
+            SendMail(sys.argv, ip)
+            # Write IP to file
             file = codecs.open(fileName, "w", "utf-8")
             file.write(ip)
-            SendMail(sys.argv, ip)
         else:
             print("IP not change.")
     except (Exception) as errorLog:
