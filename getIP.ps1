@@ -1,8 +1,19 @@
+# 先找出 VPN 連線
+$VpnAdapters = Get-NetAdapter | Where-Object { $_.Name -like "*VPN*" }
+
+# 斷開找到的每個 VPN 網線
+foreach ($Adapter in $VpnAdapters) {
+    Disable-NetAdapter -Name $Adapter.Name -Confirm:$False
+    Write-Host "The network $($Adapter.Name) terminated"
+}
+
 # 取得 IP
 $Url = "https://api.ipify.org"
 
+# 重試次數
 $RetryCount = 3
 $Retry = 0
+# 是否成功
 $Success = $false
 
 while (-not $Success -and $Retry -lt $RetryCount) {
@@ -17,7 +28,9 @@ while (-not $Success -and $Retry -lt $RetryCount) {
 }
 
 if ($Success) {
-    $OutputFile = ".\ip.txt"
+    $ScriptPath = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+    $OutputFile = "${ScriptPath}\ip.txt"
+    
     if (Test-Path $OutputFile) {
         $ExistingContent = Get-Content $OutputFile
         if ($Content -eq $ExistingContent) {
